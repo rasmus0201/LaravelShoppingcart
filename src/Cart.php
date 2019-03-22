@@ -84,9 +84,10 @@ class Cart
      * @param int|float $qty
      * @param float     $price
      * @param array     $options
+     * @param array     $extras
      * @return \Gloudemans\Shoppingcart\CartItem
      */
-    public function add($id, $name = null, $qty = null, $price = null, array $options = [])
+    public function add($id, $name = null, $qty = null, $price = null, array $options = [], array $extras = [])
     {
         if ($this->isMulti($id)) {
             return array_map(function ($item) {
@@ -94,7 +95,7 @@ class Cart
             }, $id);
         }
 
-        $cartItem = $this->createCartItem($id, $name, $qty, $price, $options);
+        $cartItem = $this->createCartItem($id, $name, $qty, $price, $options, $extras);
 
         $content = $this->getContent();
 
@@ -115,19 +116,20 @@ class Cart
      * Update the cart item with the given rowId.
      *
      * @param string $rowId
-     * @param mixed  $qty
+     * @param mixed  $value
+     * @param array  $options
      * @return \Gloudemans\Shoppingcart\CartItem
      */
-    public function update($rowId, $qty)
+    public function update($rowId, $value, array $options = null)
     {
         $cartItem = $this->get($rowId);
 
-        if ($qty instanceof Buyable) {
-            $cartItem->updateFromBuyable($qty);
-        } elseif (is_array($qty)) {
-            $cartItem->updateFromArray($qty);
+        if ($value instanceof Buyable) {
+            $cartItem->updateFromBuyable($value, $options);
+        } elseif (is_array($value)) {
+            $cartItem->updateFromArray($value);
         } else {
-            $cartItem->qty = $qty;
+            $cartItem->qty = $value;
         }
 
         $content = $this->getContent();
@@ -227,60 +229,55 @@ class Cart
     }
 
     /**
-     * Get the total price of the items in the cart.
+     * Get the formatted total price of the items in the cart.
      *
      * @param int    $decimals
      * @param string $decimalPoint
-     * @param string $thousandSeperator
+     * @param string $thousandSeparator
      * @return string
      */
-    public function total($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    public function total($decimals = null, $decimalPoint = null, $thousandSeparator = null)
     {
-        $content = $this->getContent();
-
-        $total = $content->reduce(function ($total, CartItem $cartItem) {
-            return $total + ($cartItem->qty * $cartItem->priceTax);
-        }, 0);
-
-        return $this->numberFormat($total, $decimals, $decimalPoint, $thousandSeperator);
+        return $this->numberFormat($this->total, $decimals, $decimalPoint, $thousandSeparator);
     }
 
     /**
-     * Get the total tax of the items in the cart.
+     * Get the formatted total tax of the items in the cart.
      *
      * @param int    $decimals
      * @param string $decimalPoint
-     * @param string $thousandSeperator
-     * @return float
+     * @param string $thousandSeparator
+     * @return string
      */
-    public function tax($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    public function tax($decimals = null, $decimalPoint = null, $thousandSeparator = null)
     {
-        $content = $this->getContent();
-
-        $tax = $content->reduce(function ($tax, CartItem $cartItem) {
-            return $tax + ($cartItem->qty * $cartItem->tax);
-        }, 0);
-
-        return $this->numberFormat($tax, $decimals, $decimalPoint, $thousandSeperator);
+        return $this->numberFormat($this->tax, $decimals, $decimalPoint, $thousandSeparator);
     }
 
     /**
-     * Get the subtotal (total - tax) of the items in the cart.
+     * Get the formatted subtotal (total - tax) of the items in the cart.
      *
      * @param int    $decimals
      * @param string $decimalPoint
-     * @param string $thousandSeperator
-     * @return float
+     * @param string $thousandSeparator
+     * @return string
      */
-    public function subtotal($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    public function subtotal($decimals = null, $decimalPoint = null, $thousandSeparator = null)
     {
-        $content = $this->getContent();
+        return $this->numberFormat($this->subtotal, $decimals, $decimalPoint, $thousandSeparator);
+    }
 
-        $subTotal = $content->reduce(function ($subTotal, CartItem $cartItem) {
-            return $subTotal + ($cartItem->qty * $cartItem->price);
-        }, 0);
-
-        return $this->numberFormat($subTotal, $decimals, $decimalPoint, $thousandSeperator);
+    /**
+     * Get the formatted total discount of the items in the cart.
+     *
+     * @param int    $decimals
+     * @param string $decimalPoint
+     * @param string $thousandSeparator
+     * @return string
+     */
+    public function discount($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    {
+        return $this->numberFormat($this->discount, $decimals, $decimalPoint, $thousandSeparator);
     }
 
     /**
@@ -332,6 +329,28 @@ class Cart
         $cartItem = $this->get($rowId);
 
         $cartItem->setTaxRate($taxRate);
+
+        $content = $this->getContent();
+
+        $content->put($cartItem->rowId, $cartItem);
+
+        $this->session->put($this->instance, $content);
+    }
+
+    /**
+     * Set the discount for the cart item with the given rowId.
+     *
+     * @param string    $rowId
+     * @param int|float $value
+     * @param string    $type
+     * @param string    $description
+     * @return void
+     */
+    public function setDiscount($rowId, $value, $type = 'currency', $description = '')
+    {
+        $cartItem = $this->get($rowId);
+
+        $cartItem->setDiscount([$value, $type, $description]);
 
         $content = $this->getContent();
 
@@ -401,43 +420,53 @@ class Cart
 
     }
 
-
-
     /**
-     * Deletes the stored cart with given identifier
-     *
-     * @param mixed $identifier
-     */
-    protected function deleteStoredCart($identifier) {
-        $this->getConnection()
-             ->table($this->getTableName())
-             ->where('identifier', $identifier)
-             ->delete();
-    }
-
-
-
-    /**
-     * Magic method to make accessing the total, tax and subtotal properties possible.
+     * Magic method to make accessing the total, tax subtotal and discount properties possible.
      *
      * @param string $attribute
      * @return float|null
      */
     public function __get($attribute)
     {
+        $content = $this->getContent();
+
         if($attribute === 'total') {
-            return $this->total();
+            return $content->reduce(function ($total, CartItem $cartItem) {
+                return $total + ($cartItem->qty * $cartItem->priceTax);
+            }, 0);
         }
 
         if($attribute === 'tax') {
-            return $this->tax();
+            return $content->reduce(function ($tax, CartItem $cartItem) {
+                return $tax + ($cartItem->qty * $cartItem->tax);
+            }, 0);
         }
 
         if($attribute === 'subtotal') {
-            return $this->subtotal();
+            return $content->reduce(function ($subTotal, CartItem $cartItem) {
+                return $subTotal + ($cartItem->qty * $cartItem->price);
+            }, 0);
+        }
+        if($attribute === 'discount') {
+            return $content->reduce(function ($discount, CartItem $cartItem) {
+                return $discount + ($cartItem->qty * $cartItem->discount);
+            }, 0);
         }
 
         return null;
+    }
+
+    /**
+     * Deletes the stored cart with given identifier
+     *
+     * @param mixed $identifier
+     */
+    protected function deleteStoredCart($identifier)
+    {
+        $this->getConnection()
+             ->table($this->getTableName())
+             ->where('identifier', $identifier)
+             ->delete();
     }
 
     /**
@@ -452,48 +481,6 @@ class Cart
             : new Collection;
 
         return $content;
-    }
-
-    /**
-     * Create a new CartItem from the supplied attributes.
-     *
-     * @param mixed     $id
-     * @param mixed     $name
-     * @param int|float $qty
-     * @param float     $price
-     * @param array     $options
-     * @return \Gloudemans\Shoppingcart\CartItem
-     */
-    private function createCartItem($id, $name, $qty, $price, array $options)
-    {
-        if ($id instanceof Buyable) {
-            $cartItem = CartItem::fromBuyable($id, $qty ?: []);
-            $cartItem->setQuantity($name ?: 1);
-            $cartItem->associate($id);
-        } elseif (is_array($id)) {
-            $cartItem = CartItem::fromArray($id);
-            $cartItem->setQuantity($id['qty']);
-        } else {
-            $cartItem = CartItem::fromAttributes($id, $name, $price, $options);
-            $cartItem->setQuantity($qty);
-        }
-
-        $cartItem->setTaxRate(config('cart.tax'));
-
-        return $cartItem;
-    }
-
-    /**
-     * Check if the item is a multidimensional array or an array of Buyables.
-     *
-     * @param mixed $item
-     * @return bool
-     */
-    private function isMulti($item)
-    {
-        if ( ! is_array($item)) return false;
-
-        return is_array(head($item)) || head($item) instanceof Buyable;
     }
 
     /**
@@ -532,7 +519,7 @@ class Cart
      *
      * @return string
      */
-    private function getConnectionName()
+    protected function getConnectionName()
     {
         $connection = config('cart.database.connection');
 
@@ -540,15 +527,62 @@ class Cart
     }
 
     /**
-     * Get the Formated number
+     * Create a new CartItem from the supplied attributes.
+     *
+     * @param mixed     $id
+     * @param mixed     $name
+     * @param int|float $qty
+     * @param float     $price
+     * @param array     $options
+     * @param array     $extras
+     * @return \Gloudemans\Shoppingcart\CartItem
+     */
+    private function createCartItem($id, $name, $qty, $price, array $options, array $extras)
+    {
+        if ($id instanceof Buyable) {
+            $cartItem = CartItem::fromBuyable($id, $qty ?: []);
+            $cartItem->setQuantity($name ?: 1);
+            $cartItem->associate($id);
+
+            if ($price) {
+                $cartItem->setExtras($price);
+            }
+        } elseif (is_array($id)) {
+            $cartItem = CartItem::fromArray($id);
+            $cartItem->setQuantity($id['qty']);
+        } else {
+            $cartItem = CartItem::fromAttributes($id, $name, $price, $options, $extras);
+            $cartItem->setQuantity($qty);
+        }
+
+        $cartItem->setTaxRate(config('cart.tax'));
+
+        return $cartItem;
+    }
+
+    /**
+     * Check if the item is a multidimensional array or an array of Buyables.
+     *
+     * @param mixed $item
+     * @return bool
+     */
+    private function isMulti($item)
+    {
+        if ( ! is_array($item)) return false;
+
+        return is_array(head($item)) || head($item) instanceof Buyable;
+    }
+
+    /**
+     * Get the formatted number
      *
      * @param $value
      * @param $decimals
      * @param $decimalPoint
-     * @param $thousandSeperator
+     * @param $thousandSeparator
      * @return string
      */
-    private function numberFormat($value, $decimals, $decimalPoint, $thousandSeperator)
+    private function numberFormat($value, $decimals, $decimalPoint, $thousandSeparator)
     {
         if(is_null($decimals)){
             $decimals = is_null(config('cart.format.decimals')) ? 2 : config('cart.format.decimals');
@@ -556,10 +590,10 @@ class Cart
         if(is_null($decimalPoint)){
             $decimalPoint = is_null(config('cart.format.decimal_point')) ? '.' : config('cart.format.decimal_point');
         }
-        if(is_null($thousandSeperator)){
-            $thousandSeperator = is_null(config('cart.format.thousand_seperator')) ? ',' : config('cart.format.thousand_seperator');
+        if(is_null($thousandSeparator)){
+            $thousandSeparator = is_null(config('cart.format.thousand_separator')) ? ',' : config('cart.format.thousand_separator');
         }
 
-        return number_format($value, $decimals, $decimalPoint, $thousandSeperator);
+        return number_format($value, $decimals, $decimalPoint, $thousandSeparator);
     }
 }

@@ -85,7 +85,7 @@ class CartTest extends TestCase
         $this->assertItemsInCart(1, $cart->instance(Cart::DEFAULT_INSTANCE));
         $this->assertItemsInCart(1, $cart->instance('wishlist'));
     }
-    
+
     /** @test */
     public function it_can_add_an_item()
     {
@@ -208,6 +208,44 @@ class CartTest extends TestCase
         $this->assertEquals('red', $cartItem->options->color);
 
         Event::assertDispatched('cart.added');
+    }
+
+    /** @test */
+    public function it_can_add_an_item_with_extras()
+    {
+        $this->expectsEvents('cart.added');
+
+        $cart = $this->getCart();
+
+        $extras = ['gift' => true];
+
+        $cart->add(new BuyableProduct, 1, [], $extras);
+
+        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+
+        $this->assertInstanceOf(CartItem::class, $cartItem);
+        $this->assertEquals(true, $cartItem->extras->gift);
+    }
+
+    /** @test */
+    public function it_can_add_an_item_with_options_and_extras()
+    {
+        $this->expectsEvents('cart.added');
+
+        $cart = $this->getCart();
+
+        $options = ['size' => 'XL', 'color' => 'red'];
+
+        $extras = ['gift' => true];
+
+        $cart->add(new BuyableProduct, 1, $options, $extras);
+
+        $cartItem = $cart->get('07d5da5550494c62daf9993cf954303f');
+
+        $this->assertInstanceOf(CartItem::class, $cartItem);
+        $this->assertEquals('XL', $cartItem->options->size);
+        $this->assertEquals('red', $cartItem->options->color);
+        $this->assertEquals(true, $cartItem->extras->gift);
     }
 
     /**
@@ -489,6 +527,13 @@ class CartTest extends TestCase
                 'subtotal' => 10.0,
                 'isSaved' => false,
                 'options' => [],
+                'extras' => [],
+                'discount' => [
+                    'value' => 0,
+                    'type' => 'currency',
+                    'description' => '',
+                    'symbol' => '-'
+                ]
             ],
             '370d08585360f5c568b18d1f2e4ca1df' => [
                 'rowId' => '370d08585360f5c568b18d1f2e4ca1df',
@@ -500,6 +545,13 @@ class CartTest extends TestCase
                 'subtotal' => 10.0,
                 'isSaved' => false,
                 'options' => [],
+                'extras' => [],
+                'discount' => [
+                    'value' => 0,
+                    'type' => 'currency',
+                    'description' => '',
+                    'symbol' => '-'
+                ]
             ]
         ], $content->toArray());
     }
@@ -674,6 +726,20 @@ class CartTest extends TestCase
     }
 
     /** @test */
+    public function it_can_calculate_discount_based_on_the_specified_discount()
+    {
+        $cart = $this->getCart();
+
+        $cart->add(new BuyableProduct(1, 'Some title', 10.00), 1);
+
+        $cart->setDiscount('027c91341fd5cf4d2579b49c4b6a90da', 10, 'percentage', 'Same Discount');
+
+        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+
+        $this->assertEquals(1.00, $cartItem->discount);
+    }
+
+    /** @test */
     public function it_can_calculate_tax_based_on_the_default_tax_rate_in_the_config()
     {
         $cart = $this->getCart();
@@ -697,6 +763,24 @@ class CartTest extends TestCase
         $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
 
         $this->assertEquals(1.90, $cartItem->tax);
+    }
+
+    /** @test */
+    public function it_can_calculate_tax_based_on_discounted_price()
+    {
+        $this->app['config']->set('cart.calculate_taxes_on_discounted_price', true); //Set the calculate on discounted price
+
+        $cart = $this->getCart();
+
+        $cart->add(new BuyableProduct(1, 'Some title', 10.00), 1);
+
+        $cart->setDiscount('027c91341fd5cf4d2579b49c4b6a90da', 10, 'percentage', 'Same Discount');
+
+        $cart->setTax('027c91341fd5cf4d2579b49c4b6a90da', 10);
+
+        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+
+        $this->assertEquals(0.90000000000000002, $cartItem->tax);
     }
 
     /** @test */
@@ -768,10 +852,21 @@ class CartTest extends TestCase
         $this->assertEquals('5000,00', $cart->subtotal());
         $this->assertEquals('1050,00', $cart->tax());
         $this->assertEquals('6050,00', $cart->total());
+    }
 
-        $this->assertEquals('5000,00', $cart->subtotal);
-        $this->assertEquals('1050,00', $cart->tax);
-        $this->assertEquals('6050,00', $cart->total);
+    /** @test */
+    public function it_can_return_cart_float_numbers()
+    {
+        $this->setConfigFormat(2, ',', '');
+
+        $cart = $this->getCart();
+
+        $cart->add(new BuyableProduct(1, 'Some title', 1000.00), 1);
+        $cart->add(new BuyableProduct(2, 'Some title', 2000.00), 2);
+
+        $this->assertEquals(5000.00, $cart->subtotal);
+        $this->assertEquals(1050.00, $cart->tax);
+        $this->assertEquals(6050.00, $cart->total);
     }
 
     /** @test */
@@ -783,12 +878,17 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct(1, 'Some title', 2000.00), 2);
 
+        $cart->setDiscount('027c91341fd5cf4d2579b49c4b6a90da', 10, 'percentage', 'Same Discount');
+
         $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
 
         $this->assertEquals('2000,00', $cartItem->price());
-        $this->assertEquals('2420,00', $cartItem->priceTax());
+        $this->assertEquals('1800,00', $cartItem->priceDiscount());
+        $this->assertEquals('2220,00', $cartItem->priceTax());
         $this->assertEquals('4000,00', $cartItem->subtotal());
-        $this->assertEquals('4840,00', $cartItem->total());
+        $this->assertEquals('4440,00', $cartItem->total());
+        $this->assertEquals('200,00', $cartItem->discount());
+        $this->assertEquals('400,00', $cartItem->discountTotal());
         $this->assertEquals('420,00', $cartItem->tax());
         $this->assertEquals('840,00', $cartItem->taxTotal());
     }
@@ -833,7 +933,7 @@ class CartTest extends TestCase
         $serialized = serialize($cart->content());
 
         $this->assertDatabaseHas('shoppingcart', ['identifier' => $identifier, 'instance' => 'default', 'content' => $serialized]);
-        
+
         Event::assertDispatched('cart.stored');
     }
 
@@ -858,7 +958,7 @@ class CartTest extends TestCase
 
         $cart->restore($identifier);
 
-        $this->assertItemsInCart(1, $cart);       
+        $this->assertItemsInCart(1, $cart);
 
         Event::assertDispatched('cart.restored');
     }
@@ -887,16 +987,20 @@ class CartTest extends TestCase
         $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
 
         $cart->setTax('027c91341fd5cf4d2579b49c4b6a90da', 19);
+        $cart->setDiscount('027c91341fd5cf4d2579b49c4b6a90da', 10, 'percentage', 'Same Discount');
 
         $this->assertEquals(10.00, $cartItem->price(2));
-        $this->assertEquals(11.90, $cartItem->priceTax(2));
+        $this->assertEquals(9.00, $cartItem->priceDiscount(2));
+        $this->assertEquals(10.90, $cartItem->priceTax(2));
         $this->assertEquals(20.00, $cartItem->subtotal(2));
-        $this->assertEquals(23.80, $cartItem->total(2));
+        $this->assertEquals(21.80, $cartItem->total(2));
+        $this->assertEquals(1.00, $cartItem->discount(2));
+        $this->assertEquals(2.00, $cartItem->discountTotal(2));
         $this->assertEquals(1.90, $cartItem->tax(2));
         $this->assertEquals(3.80, $cartItem->taxTotal(2));
 
         $this->assertEquals(20.00, $cart->subtotal(2));
-        $this->assertEquals(23.80, $cart->total(2));
+        $this->assertEquals(21.80, $cart->total(2));
         $this->assertEquals(3.80, $cart->tax(2));
     }
 
@@ -911,7 +1015,7 @@ class CartTest extends TestCase
 
         $user = Mockery::mock(Authenticatable::class);
 
-        event(new Logout($user));
+        event(new Logout('web', $user));
     }
 
     /**
@@ -929,7 +1033,7 @@ class CartTest extends TestCase
 
     /**
      * Set the config number format.
-     * 
+     *
      * @param int    $decimals
      * @param string $decimalPoint
      * @param string $thousandSeperator
