@@ -377,7 +377,7 @@ class CartItem implements Arrayable, Jsonable
             return $this->numberFormat($this->qty * $this->priceTax, null, '.', '');
         }
 
-        if($attribute === 'priceTax') {
+        if ($attribute === 'priceTax') {
             return $this->taxedPrice();
         }
 
@@ -393,19 +393,19 @@ class CartItem implements Arrayable, Jsonable
             return $this->numberFormat($this->tax * $this->qty, null, '.', '');
         }
 
-        if($attribute === 'priceDiscount') {
+        if ($attribute === 'priceDiscount') {
             return $this->discountedPrice();
         }
 
-        if($attribute === 'discount') {
+        if ($attribute === 'discount') {
             return $this->discountRate->calculateDiscount($this->price);
         }
 
-        if($attribute === 'discountTotal') {
+        if ($attribute === 'discountTotal') {
             return $this->qty * $this->discount;
         }
 
-        if($attribute === 'model' && isset($this->associatedModel)) {
+        if ($attribute === 'model' && isset($this->associatedModel)) {
             return with(new $this->associatedModel)->find($this->id);
         }
 
