@@ -62,7 +62,7 @@ class CartItem implements Arrayable, Jsonable
      *
      * @var array
      */
-    public $discountRate;
+    private $discountRate;
 
     /**
      * The FQN of the associated model.
