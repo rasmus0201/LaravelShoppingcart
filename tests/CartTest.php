@@ -528,7 +528,10 @@ class CartTest extends TestCase
                 'isSaved' => false,
                 'options' => [],
                 'extras' => [],
-                'discount' => [
+                'discount' => 0,
+                'discountTotal' => 0,
+                'priceDiscount' => 10.00,
+                'discountRate' => [
                     'value' => 0,
                     'type' => 'currency',
                     'description' => '',
@@ -546,7 +549,10 @@ class CartTest extends TestCase
                 'isSaved' => false,
                 'options' => [],
                 'extras' => [],
-                'discount' => [
+                'discount' => 0,
+                'discountTotal' => 0,
+                'priceDiscount' => 10.00,
+                'discountRate' => [
                     'value' => 0,
                     'type' => 'currency',
                     'description' => '',
