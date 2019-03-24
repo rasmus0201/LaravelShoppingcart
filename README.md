@@ -1,23 +1,21 @@
 ## LaravelShoppingcart
-[![Build Status](https://travis-ci.org/hardevine/LaravelShoppingcart.png?branch=master)](https://travis-ci.org/hardevine/LaravelShoppingcart)
-[![Total Downloads](https://poser.pugx.org/hardevine/shoppingcart/downloads.png)](https://packagist.org/packages/hardevine/shoppingcart)
-[![Latest Stable Version](https://poser.pugx.org/hardevine/shoppingcart/v/stable)](https://packagist.org/packages/hardevine/shoppingcart)
-[![Latest Unstable Version](https://poser.pugx.org/hardevine/shoppingcart/v/unstable)](https://packagist.org/packages/hardevine/shoppingcart)
+[![Build Status](https://travis-ci.org/Crinsane/LaravelShoppingcart.png?branch=master)](https://travis-ci.org/Crinsane/LaravelShoppingcart)
+[![Total Downloads](https://poser.pugx.org/gloudemans/shoppingcart/downloads.png)](https://packagist.org/packages/gloudemans/shoppingcart)
+[![Latest Stable Version](https://poser.pugx.org/gloudemans/shoppingcart/v/stable)](https://packagist.org/packages/gloudemans/shoppingcart)
+[![Latest Unstable Version](https://poser.pugx.org/gloudemans/shoppingcart/v/unstable)](https://packagist.org/packages/gloudemans/shoppingcart)
 [![License](https://poser.pugx.org/gloudemans/shoppingcart/license)](https://packagist.org/packages/gloudemans/shoppingcart)
 
 A simple shoppingcart implementation for Laravel.
 
 ## Installation
 
-Install the package through [Composer](http://getcomposer.org/). 
+Install the package through [Composer](http://getcomposer.org/).
 
 Run the Composer require command from the Terminal:
 
-    composer require hardevine/shoppingcart
-    
-If you're using Laravel 5.5, this is all there is to do. 
+    composer require gloudemans/shoppingcart
 
-Should you still be on version 5.4 of Laravel, the final steps for you are to add the service provider of the package and alias the package. To do this open your `config/app.php` file.
+Now all you have to do is add the service provider of the package and alias the package. To do this open your `config/app.php` file.
 
 Add a new line to the `providers` array:
 
@@ -35,10 +33,10 @@ Now you're ready to start using the shoppingcart in your application.
 Look at one of the following topics to learn more about LaravelShoppingcart
 
 * [Usage](#usage)
+* [Discounts](#discounts)
 * [Collections](#collections)
 * [Instances](#instances)
 * [Models](#models)
-* [Database](#database)
 * [Exceptions](#exceptions)
 * [Events](#events)
 * [Example](#example)
@@ -63,40 +61,42 @@ As an optional fifth parameter you can pass it options, so you can add multiple 
 Cart::add('293ad', 'Product 1', 1, 9.99, ['size' => 'large']);
 ```
 
+In the sixth optional parameter you can pass it extra information. As shipping information for example.
+
+```php
+Cart::add('293ad', 'Product 1', 1, 9.99, ['size' => 'large'], ['gift' => true]);
+```
+
 **The `add()` method will return an CartItem instance of the item you just added to the cart.**
 
 Maybe you prefer to add the item using an array? As long as the array contains the required keys, you can pass it to the method. The options key is optional.
 
 ```php
-Cart::add(['id' => '293ad', 'name' => 'Product 1', 'qty' => 1, 'price' => 9.99, 'options' => ['size' => 'large']]);
+Cart::add(['id' => '293ad', 'name' => 'Product 1', 'qty' => 1, 'price' => 9.99, 'options' => ['size' => 'large'], 'extras' => ['gift' => true]]);
 ```
 
-New in version 2 of the package is the possibility to work with the [Buyable](#buyable) interface. The way this works is that you have a model implement the `Buyable` interface, which will make you implement a few methods so the package knows how to get the id, name and price from your model. 
-This way you can just pass the `add()` method a model and the quantity and it will automatically add it to the cart. 
-
-The path to the `Buyable` interface is:
-
-    Gloudemans\Shoppingcart\Contracts\Buyable;
+New in version 2 of the package is the possibility to work with the `Buyable` interface. The way this works is that you have a model implement the `Buyable` interface, which will make you implement a few methods so the package knows how to get the id, name and price from your model.
+This way you can just pass the `add()` method a model and the quantity and it will automatically add it to the cart.
 
 **As an added bonus it will automatically associate the model with the CartItem**
 
 ```php
-Cart::add($product, 1, ['size' => 'large']);
+Cart::add($product, 1);
 ```
-As an optional third parameter you can add options.
+As an optional third and fourth parameters you can add options and extras.
 ```php
-Cart::add($product, 1, ['size' => 'large']);
+Cart::add($product, 1, ['size' => 'large'], ['gift' => true]);
 ```
 
 Finally, you can also add multipe items to the cart at once.
-You can just pass the `add()` method an array of arrays, or an array of Buyables and they will be added to the cart. 
+You can just pass the `add()` method an array of arrays, or an array of Buyables and they will be added to the cart.
 
 **When adding multiple items to the cart, the `add()` method will return an array of CartItems.**
 
 ```php
 Cart::add([
   ['id' => '293ad', 'name' => 'Product 1', 'qty' => 1, 'price' => 10.00],
-  ['id' => '4832k', 'name' => 'Product 2', 'qty' => 1, 'price' => 10.00, 'options' => ['size' => 'large']]
+  ['id' => '4832k', 'name' => 'Product 2', 'qty' => 1, 'price' => 10.00, 'options' => ['size' => 'large'], 'extras' => ['gift' => true]]
 ]);
 
 Cart::add([$product1, $product2]);
@@ -178,7 +178,7 @@ Cart::total();
 The method will automatically format the result, which you can tweak using the three optional parameters
 
 ```php
-Cart::total($decimals, $decimalSeperator, $thousandSeperator);
+Cart::total($decimals, $decimalSeparator, $thousandSeparator);
 ```
 
 You can set the default number format in the config file.
@@ -196,7 +196,7 @@ Cart::tax();
 The method will automatically format the result, which you can tweak using the three optional parameters
 
 ```php
-Cart::tax($decimals, $decimalSeperator, $thousandSeperator);
+Cart::tax($decimals, $decimalSeparator, $thousandSeparator);
 ```
 
 You can set the default number format in the config file.
@@ -205,7 +205,7 @@ You can set the default number format in the config file.
 
 ### Cart::subtotal()
 
-The `subtotal()` method can be used to get the total of all items in the cart, minus the total amount of tax. 
+The `subtotal()` method can be used to get the total of all items in the cart, minus the total amount of tax.
 
 ```php
 Cart::subtotal();
@@ -214,7 +214,7 @@ Cart::subtotal();
 The method will automatically format the result, which you can tweak using the three optional parameters
 
 ```php
-Cart::subtotal($decimals, $decimalSeperator, $thousandSeperator);
+Cart::subtotal($decimals, $decimalSeparator, $thousandSeparator);
 ```
 
 You can set the default number format in the config file.
@@ -235,7 +235,7 @@ To find an item in the cart, you can use the `search()` method.
 
 **This method was changed on version 2**
 
-Behind the scenes, the method simply uses the filter method of the Laravel Collection class. This means you must pass it a Closure in which you'll specify you search terms.
+Behind the scenes, the method simply uses the search method of the Laravel Collection class. This means you must pass it a Closure in which you'll specify you search terms.
 
 If you for instance want to find all items with an id of 1:
 
@@ -250,6 +250,20 @@ As you can see the Closure will receive two parameters. The first is the CartIte
 **The method will return a Collection containing all CartItems that where found**
 
 This way of searching gives you total control over the search process and gives you the ability to create very precise and specific searches.
+
+## Discounts
+
+It's possible to set a discount to the each item in the cart. You'll pass the setDiscount method the rowId, value, the type of discount and as optional fourth parameter, the description:
+
+```php
+$rowId = 'da39a3ee5e6b4b0d3255bfef95601890afd80709';
+
+Cart::setDiscount($rowId, 10, 'percentage', 'Simple Discount');
+```
+The types of discount accepts are percentage and currency.
+
+// It´s possible to call the setDiscount method on the CartItem using an array of parameters!
+$cartItem->setDiscount([10, 'currency', 'Simple Discount']);
 
 ## Collections
 
@@ -300,7 +314,7 @@ Cart::instance('wishlist')->count();
 
 ## Models
 
-Because it can be very convenient to be able to directly access a model from a CartItem is it possible to associate a model with the items in the cart. Let's say you have a `Product` model in your application. With the `associate()` method, you can tell the cart that an item in the cart, is associated to the `Product` model. 
+Because it can be very convenient to be able to directly access a model from a CartItem is it possible to associate a model with the items in the cart. Let's say you have a `Product` model in your application. With the `associate()` method, you can tell the cart that an item in the cart, is associated to the `Product` model.
 
 That way you can access your model right from the `CartItem`!
 
@@ -330,87 +344,6 @@ foreach(Cart::content() as $row) {
 }
 ```
 
-### Buyable
-
-For the convenience of faster adding items to cart and their automatic association, your model can implement `Buyable` interface. To do so, it must implement such functions:
-
-```php
-    public function getBuyableIdentifier(){
-        return $this->id;
-    }
-
-    public function getBuyableDescription(){
-        return $this->name;
-    }
-
-    public function getBuyablePrice(){
-        return $this->price;
-    }
-```
-
-Example:
-
-```php
-<?php
-
-namespace App\Models;
-
-use Gloudemans\Shoppingcart\Contracts\Buyable;
-use Illuminate\Database\Eloquent\Model;
-
-class Product exends Model implements Buyable {
-    public function getBuyableIdentifier($options = null) {
-        return $this->id;
-    }
-
-    public function getBuyableDescription($options = null) {
-        return $this->name;
-    }
-
-    public function getBuyablePrice($options = null) {
-        return $this->price;
-    }
-}
-```
-
-
-## Database
-
-- [Config](#configuration)
-- [Storing the cart](#storing-the-cart)
-- [Restoring the cart](#restoring-the-cart)
-
-### Configuration
-To save cart into the database so you can retrieve it later, the package needs to know which database connection to use and what the name of the table is.
-By default the package will use the default database connection and use a table named `shoppingcart`.
-If you want to change these options, you'll have to publish the `config` file.
-
-    php artisan vendor:publish --provider="Gloudemans\Shoppingcart\ShoppingcartServiceProvider" --tag="config"
-
-This will give you a `cart.php` config file in which you can make the changes.
-
-To make your life easy, the package also includes a ready to use `migration` which you can publish by running:
-
-    php artisan vendor:publish --provider="Gloudemans\Shoppingcart\ShoppingcartServiceProvider" --tag="migrations"
-    
-This will place a `shoppingcart` table's migration file into `database/migrations` directory. Now all you have to do is run `php artisan migrate` to migrate your database.
-
-### Storing the cart    
-To store your cart instance into the database, you have to call the `store($identifier) ` method. Where `$identifier` is a random key, for instance the id or username of the user.
-
-    Cart::store('username');
-    
-    // To store a cart instance named 'wishlist'
-    Cart::instance('wishlist')->store('username');
-
-### Restoring the cart
-If you want to retrieve the cart from the database and restore it, all you have to do is call the  `restore($identifier)` where `$identifier` is the key you specified for the `store` method.
- 
-    Cart::restore('username');
-    
-    // To restore a cart instance named 'wishlist'
-    Cart::instance('wishlist')->restore('username');
-
 ## Exceptions
 
 The Cart package will throw exceptions if something goes wrong. This way it's easier to debug your code using the Cart package or to handle the error based on the type of exceptions. The Cart packages can throw the following exceptions:
@@ -427,9 +360,9 @@ The cart also has events build in. There are five events available for you to li
 
 | Event         | Fired                                    | Parameter                        |
 | ------------- | ---------------------------------------- | -------------------------------- |
-| cart.added    | When an item was added to the cart.      | The `CartItem` that was added.   |
-| cart.updated  | When an item in the cart was updated.    | The `CartItem` that was updated. |
-| cart.removed  | When an item is removed from the cart.   | The `CartItem` that was removed. |
+| cart.add      | When an item was added to the cart.      | The `CartItem` that was added.   |
+| cart.update   | When an item in the cart was updated.    | The `CartItem` that was updated. |
+| cart.remove   | When an item is removed from the cart.   | The `CartItem` that was removed. |
 | cart.stored   | When the content of a cart was stored.   | -                                |
 | cart.restored | When the content of a cart was restored. | -                                |
 
@@ -471,7 +404,7 @@ Cart::add('1239ad0', 'Product 2', 2, 5.95, ['size' => 'large']);
 	   	<?php endforeach;?>
 
    	</tbody>
-   	
+
    	<tfoot>
    		<tr>
    			<td colspan="2">&nbsp;</td>
