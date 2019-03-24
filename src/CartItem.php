@@ -112,7 +112,7 @@ class CartItem implements Arrayable, Jsonable
         $this->options      = new CartItemOptions($options);
         $this->extras       = new CartItemExtras($extras);
         $this->discountRate = new CartItemDiscount(0, 'currency');
-        $this->rowId = $this->generateRowId($id, $options);
+        $this->rowId = $this->generateRowId($id, $options, $extras);
     }
 
     /**
@@ -315,7 +315,11 @@ class CartItem implements Arrayable, Jsonable
         $this->options  = new CartItemOptions(array_get($attributes, 'options', $this->options));
         $this->extras   = new CartItemExtras(array_get($attributes, 'extras', $this->extras));
 
-        $this->rowId = $this->generateRowId($this->id, $this->options->all());
+        $this->rowId = $this->generateRowId(
+            $this->id,
+            $this->options->all(),
+            $this->extras->all()
+        );
     }
 
     /**
@@ -370,11 +374,11 @@ class CartItem implements Arrayable, Jsonable
         }
 
         if ($attribute === 'subtotal') {
-            return $this->numberFormat($this->qty * $this->price, null, '.', '');
+            return ($this->qty * $this->price);
         }
 
         if ($attribute === 'total') {
-            return $this->numberFormat($this->qty * $this->priceTax, null, '.', '');
+            return ($this->qty * $this->priceTax);
         }
 
         if ($attribute === 'priceTax') {
@@ -386,11 +390,11 @@ class CartItem implements Arrayable, Jsonable
                 ? $this->priceDiscount
                 : $this->price);
 
-            return $this->numberFormat($price * ($this->taxRate / 100), null, '.', '');
+            return ($price * ($this->taxRate / 100));
         }
 
         if ($attribute === 'taxTotal') {
-            return $this->numberFormat($this->tax * $this->qty, null, '.', '');
+            return ($this->tax * $this->qty);
         }
 
         if ($attribute === 'priceDiscount') {
@@ -465,13 +469,15 @@ class CartItem implements Arrayable, Jsonable
      *
      * @param string $id
      * @param array  $options
+     * @param array  $extras
      * @return string
      */
-    protected function generateRowId($id, array $options)
+    protected function generateRowId($id, array $options, array $extras)
     {
         ksort($options);
+        ksort($extras);
 
-        return md5($id . serialize($options));
+        return md5($id . serialize($options) . serialize($extras));
     }
 
     /**
@@ -518,7 +524,8 @@ class CartItem implements Arrayable, Jsonable
 
         return $value;
     }
-     /**
+
+    /**
      * Return the price with tax
      *
      * @return int|float

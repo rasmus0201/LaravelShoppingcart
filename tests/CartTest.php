@@ -110,7 +110,7 @@ class CartTest extends TestCase
         $cartItem = $cart->add(new BuyableProduct);
 
         $this->assertInstanceOf(CartItem::class, $cartItem);
-        $this->assertEquals('027c91341fd5cf4d2579b49c4b6a90da', $cartItem->rowId);
+        $this->assertEquals('3530c9670bae9d337f1806295206091b', $cartItem->rowId);
 
         Event::assertDispatched('cart.added');
     }
@@ -201,7 +201,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct, 1, $options);
 
-        $cartItem = $cart->get('07d5da5550494c62daf9993cf954303f');
+        $cartItem = $cart->get('6dbc69ac09fcab6dc16fa278bd8ffb29');
 
         $this->assertInstanceOf(CartItem::class, $cartItem);
         $this->assertEquals('XL', $cartItem->options->size);
@@ -221,7 +221,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct, 1, [], $extras);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertInstanceOf(CartItem::class, $cartItem);
         $this->assertEquals(true, $cartItem->extras->gift);
@@ -240,7 +240,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct, 1, $options, $extras);
 
-        $cartItem = $cart->get('07d5da5550494c62daf9993cf954303f');
+        $cartItem = $cart->get('6dbc69ac09fcab6dc16fa278bd8ffb29');
 
         $this->assertInstanceOf(CartItem::class, $cartItem);
         $this->assertEquals('XL', $cartItem->options->size);
@@ -334,7 +334,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct);
 
-        $cart->update('027c91341fd5cf4d2579b49c4b6a90da', 2);
+        $cart->update('3530c9670bae9d337f1806295206091b', 2);
 
         $this->assertItemsInCart(2, $cart);
         $this->assertRowsInCart(1, $cart);
@@ -351,10 +351,10 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct);
 
-        $cart->update('027c91341fd5cf4d2579b49c4b6a90da', new BuyableProduct(1, 'Different description'));
+        $cart->update('3530c9670bae9d337f1806295206091b', new BuyableProduct(1, 'Different description'));
 
         $this->assertItemsInCart(1, $cart);
-        $this->assertEquals('Different description', $cart->get('027c91341fd5cf4d2579b49c4b6a90da')->name);
+        $this->assertEquals('Different description', $cart->get('3530c9670bae9d337f1806295206091b')->name);
 
         Event::assertDispatched('cart.updated');
     }
@@ -368,10 +368,10 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct);
 
-        $cart->update('027c91341fd5cf4d2579b49c4b6a90da', ['name' => 'Different description']);
+        $cart->update('3530c9670bae9d337f1806295206091b', ['name' => 'Different description']);
 
         $this->assertItemsInCart(1, $cart);
-        $this->assertEquals('Different description', $cart->get('027c91341fd5cf4d2579b49c4b6a90da')->name);
+        $this->assertEquals('Different description', $cart->get('3530c9670bae9d337f1806295206091b')->name);
 
         Event::assertDispatched('cart.updated');
     }
@@ -396,11 +396,11 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct, 1, ['color' => 'red']);
 
-        $cart->update('ea65e0bdcd1967c4b3149e9e780177c0', ['options' => ['color' => 'blue']]);
+        $cart->update('0f2ae8d78274cefebda50879cd65e896', ['options' => ['color' => 'blue']]);
 
         $this->assertItemsInCart(1, $cart);
-        $this->assertEquals('7e70a1e9aaadd18c72921a07aae5d011', $cart->content()->first()->rowId);
-        $this->assertEquals('blue', $cart->get('7e70a1e9aaadd18c72921a07aae5d011')->options->color);
+        $this->assertEquals('f080a49705d0bb6e76bf35d7160e6859', $cart->content()->first()->rowId);
+        $this->assertEquals('blue', $cart->get('f080a49705d0bb6e76bf35d7160e6859')->options->color);
     }
 
     /** @test */
@@ -411,7 +411,7 @@ class CartTest extends TestCase
         $cart->add(new BuyableProduct, 1, ['color' => 'red']);
         $cart->add(new BuyableProduct, 1, ['color' => 'blue']);
 
-        $cart->update('7e70a1e9aaadd18c72921a07aae5d011', ['options' => ['color' => 'red']]);
+        $cart->update('f080a49705d0bb6e76bf35d7160e6859', ['options' => ['color' => 'red']]);
 
         $this->assertItemsInCart(2, $cart);
         $this->assertRowsInCart(1, $cart);
@@ -426,7 +426,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct);
 
-        $cart->remove('027c91341fd5cf4d2579b49c4b6a90da');
+        $cart->remove('3530c9670bae9d337f1806295206091b');
 
         $this->assertItemsInCart(0, $cart);
         $this->assertRowsInCart(0, $cart);
@@ -443,7 +443,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct);
 
-        $cart->update('027c91341fd5cf4d2579b49c4b6a90da', 0);
+        $cart->update('3530c9670bae9d337f1806295206091b', 0);
 
         $this->assertItemsInCart(0, $cart);
         $this->assertRowsInCart(0, $cart);
@@ -460,7 +460,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct);
 
-        $cart->update('027c91341fd5cf4d2579b49c4b6a90da', -1);
+        $cart->update('3530c9670bae9d337f1806295206091b', -1);
 
         $this->assertItemsInCart(0, $cart);
         $this->assertRowsInCart(0, $cart);
@@ -475,7 +475,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertInstanceOf(CartItem::class, $cartItem);
     }
@@ -517,8 +517,8 @@ class CartTest extends TestCase
 
         $this->assertInstanceOf(Collection::class, $content);
         $this->assertEquals([
-            '027c91341fd5cf4d2579b49c4b6a90da' => [
-                'rowId' => '027c91341fd5cf4d2579b49c4b6a90da',
+            '3530c9670bae9d337f1806295206091b' => [
+                'rowId' => '3530c9670bae9d337f1806295206091b',
                 'id' => 1,
                 'name' => 'Item name',
                 'qty' => 1,
@@ -535,8 +535,8 @@ class CartTest extends TestCase
                     'symbol' => '-'
                 ]
             ],
-            '370d08585360f5c568b18d1f2e4ca1df' => [
-                'rowId' => '370d08585360f5c568b18d1f2e4ca1df',
+            'b075a4fdc839e28270cf955644f691c5' => [
+                'rowId' => 'b075a4fdc839e28270cf955644f691c5',
                 'id' => 2,
                 'name' => 'Item name',
                 'qty' => 1,
@@ -653,7 +653,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertContains(BuyableProduct::class, Assert::readAttribute($cartItem, 'associatedModel'));
     }
@@ -665,9 +665,9 @@ class CartTest extends TestCase
 
         $cart->add(1, 'Test item', 1, 10.00);
 
-        $cart->associate('027c91341fd5cf4d2579b49c4b6a90da', new ProductModel);
+        $cart->associate('3530c9670bae9d337f1806295206091b', new ProductModel);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertEquals(ProductModel::class, Assert::readAttribute($cartItem, 'associatedModel'));
     }
@@ -683,7 +683,7 @@ class CartTest extends TestCase
 
         $cart->add(1, 'Test item', 1, 10.00);
 
-        $cart->associate('027c91341fd5cf4d2579b49c4b6a90da', 'SomeModel');
+        $cart->associate('3530c9670bae9d337f1806295206091b', 'SomeModel');
     }
 
     /** @test */
@@ -693,9 +693,9 @@ class CartTest extends TestCase
 
         $cart->add(1, 'Test item', 1, 10.00);
 
-        $cart->associate('027c91341fd5cf4d2579b49c4b6a90da', new ProductModel);
+        $cart->associate('3530c9670bae9d337f1806295206091b', new ProductModel);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertInstanceOf(ProductModel::class, $cartItem->model);
         $this->assertEquals('Some value', $cartItem->model->someValue);
@@ -708,7 +708,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct(1, 'Some title', 9.99), 3);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertEquals(29.97, $cartItem->subtotal);
     }
@@ -720,7 +720,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct(1, 'Some title', 500), 3);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertEquals('1.500,00', $cartItem->subtotal(2, ',', '.'));
     }
@@ -732,9 +732,9 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct(1, 'Some title', 10.00), 1);
 
-        $cart->setDiscount('027c91341fd5cf4d2579b49c4b6a90da', 10, 'percentage', 'Same Discount');
+        $cart->setDiscount('3530c9670bae9d337f1806295206091b', 10, 'percentage', 'Same Discount');
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertEquals(1.00, $cartItem->discount);
     }
@@ -746,7 +746,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct(1, 'Some title', 10.00), 1);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertEquals(2.10, $cartItem->tax);
     }
@@ -758,9 +758,9 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct(1, 'Some title', 10.00), 1);
 
-        $cart->setTax('027c91341fd5cf4d2579b49c4b6a90da', 19);
+        $cart->setTax('3530c9670bae9d337f1806295206091b', 19);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertEquals(1.90, $cartItem->tax);
     }
@@ -774,11 +774,11 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct(1, 'Some title', 10.00), 1);
 
-        $cart->setDiscount('027c91341fd5cf4d2579b49c4b6a90da', 10, 'percentage', 'Same Discount');
+        $cart->setDiscount('3530c9670bae9d337f1806295206091b', 10, 'percentage', 'Same Discount');
 
-        $cart->setTax('027c91341fd5cf4d2579b49c4b6a90da', 10);
+        $cart->setTax('3530c9670bae9d337f1806295206091b', 10);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertEquals(0.90000000000000002, $cartItem->tax);
     }
@@ -790,7 +790,7 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct(1, 'Some title', 10000.00), 1);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertEquals('2.100,00', $cartItem->tax(2, ',', '.'));
     }
@@ -878,9 +878,9 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct(1, 'Some title', 2000.00), 2);
 
-        $cart->setDiscount('027c91341fd5cf4d2579b49c4b6a90da', 10, 'percentage', 'Same Discount');
+        $cart->setDiscount('3530c9670bae9d337f1806295206091b', 10, 'percentage', 'Same Discount');
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
         $this->assertEquals('2000,00', $cartItem->price());
         $this->assertEquals('1800,00', $cartItem->priceDiscount());
@@ -984,10 +984,10 @@ class CartTest extends TestCase
 
         $cart->add(new BuyableProduct(1, 'First item', 10.00), 2);
 
-        $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
+        $cartItem = $cart->get('3530c9670bae9d337f1806295206091b');
 
-        $cart->setTax('027c91341fd5cf4d2579b49c4b6a90da', 19);
-        $cart->setDiscount('027c91341fd5cf4d2579b49c4b6a90da', 10, 'percentage', 'Same Discount');
+        $cart->setTax('3530c9670bae9d337f1806295206091b', 19);
+        $cart->setDiscount('3530c9670bae9d337f1806295206091b', 10, 'percentage', 'Same Discount');
 
         $this->assertEquals(10.00, $cartItem->price(2));
         $this->assertEquals(9.00, $cartItem->priceDiscount(2));

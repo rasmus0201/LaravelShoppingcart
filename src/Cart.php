@@ -447,6 +447,7 @@ class Cart
                 return $subTotal + ($cartItem->qty * $cartItem->price);
             }, 0);
         }
+
         if($attribute === 'discount') {
             return $content->reduce(function ($discount, CartItem $cartItem) {
                 return $discount + ($cartItem->qty * $cartItem->discount);
