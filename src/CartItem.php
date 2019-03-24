@@ -58,6 +58,13 @@ class CartItem implements Arrayable, Jsonable
     public $extras;
 
     /**
+     * The extra information for this cart item.
+     *
+     * @var array
+     */
+    public $discountRate;
+
+    /**
      * The FQN of the associated model.
      *
      * @var string|null
@@ -70,13 +77,6 @@ class CartItem implements Arrayable, Jsonable
      * @var int|float
      */
     private $taxRate = 0;
-
-    /**
-     * The discount rate for the cart item.
-     *
-     * @var CartItemDiscount
-     */
-    private $discountRate;
 
     /**
      * Is item saved for later.
