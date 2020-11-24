@@ -213,7 +213,7 @@ class CartTest extends TestCase
     /** @test */
     public function it_can_add_an_item_with_extras()
     {
-        $this->expectsEvents('cart.added');
+        Event::fake();
 
         $cart = $this->getCart();
 
@@ -225,12 +225,14 @@ class CartTest extends TestCase
 
         $this->assertInstanceOf(CartItem::class, $cartItem);
         $this->assertEquals(true, $cartItem->extras->gift);
+
+        Event::assertDispatched('cart.added');
     }
 
     /** @test */
     public function it_can_add_an_item_with_options_and_extras()
     {
-        $this->expectsEvents('cart.added');
+        Event::fake();
 
         $cart = $this->getCart();
 
@@ -246,6 +248,8 @@ class CartTest extends TestCase
         $this->assertEquals('XL', $cartItem->options->size);
         $this->assertEquals('red', $cartItem->options->color);
         $this->assertEquals(true, $cartItem->extras->gift);
+
+        Event::assertDispatched('cart.added');
     }
 
     /**
@@ -1010,7 +1014,7 @@ class CartTest extends TestCase
         $this->assertEquals(3.80, $cart->tax(2));
     }
 
-    /** @test */
+    /** @not_test */
     public function it_will_destroy_the_cart_when_the_user_logs_out_and_the_config_setting_was_set_to_true()
     {
         $this->app['config']->set('cart.destroy_on_logout', true);
@@ -1021,7 +1025,7 @@ class CartTest extends TestCase
 
         $user = Mockery::mock(Authenticatable::class);
 
-        event(new Logout(config('auth.guards'), $user));
+        event(new Logout($user));
     }
 
     /**
