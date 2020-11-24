@@ -2,19 +2,19 @@
 
 namespace Gloudemans\Tests\Shoppingcart;
 
-use Mockery;
-use PHPUnit\Framework\Assert;
 use Gloudemans\Shoppingcart\Cart;
-use Orchestra\Testbench\TestCase;
-use Illuminate\Auth\Events\Logout;
-use Illuminate\Support\Collection;
 use Gloudemans\Shoppingcart\CartItem;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Session\SessionManager;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Gloudemans\Shoppingcart\ShoppingcartServiceProvider;
-use Gloudemans\Tests\Shoppingcart\Fixtures\ProductModel;
 use Gloudemans\Tests\Shoppingcart\Fixtures\BuyableProduct;
+use Gloudemans\Tests\Shoppingcart\Fixtures\ProductModel;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Session\SessionManager;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Event;
+use Mockery;
+use Orchestra\Testbench\TestCase;
+use PHPUnit\Framework\Assert;
 
 class CartTest extends TestCase
 {
@@ -1042,12 +1042,12 @@ class CartTest extends TestCase
      *
      * @param int    $decimals
      * @param string $decimalPoint
-     * @param string $thousandSeperator
+     * @param string $thousandSeparator
      */
-    private function setConfigFormat($decimals, $decimalPoint, $thousandSeperator)
+    private function setConfigFormat($decimals, $decimalPoint, $thousandSeparator)
     {
         $this->app['config']->set('cart.format.decimals', $decimals);
         $this->app['config']->set('cart.format.decimal_point', $decimalPoint);
-        $this->app['config']->set('cart.format.thousand_seperator', $thousandSeperator);
+        $this->app['config']->set('cart.format.thousand_separator', $thousandSeparator);
     }
 }
