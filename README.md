@@ -61,9 +61,15 @@ As an optional fifth parameter you can pass it options, so you can add multiple 
 Cart::add('293ad', 'Product 1', 1, 9.99, ['size' => 'large']);
 ```
 
+In the sixth optional parameter you can pass it extra information. As shipping information for example.
+
+```php
+Cart::add('293ad', 'Product 1', 1, 9.99, ['size' => 'large'], ['gift' => true]);
+```
+
 You can optional pass different taxrates to the items.
 ```php
-Cart::add('293ad', 'Product 1', 1, 9.99, ['size' => 'large'], 20);
+Cart::add('293ad', 'Product 1', 1, 9.99, ['size' => 'large'], [], 20);
 ```
 
 **The `add()` method will return an CartItem instance of the item you just added to the cart.**

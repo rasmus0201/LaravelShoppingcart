@@ -508,11 +508,15 @@ class Cart
             $cartItem = CartItem::fromBuyable($id, $qty ?: []);
             $cartItem->setQuantity($name ?: 1);
             $cartItem->associate($id);
+
+            if ($price) {
+                $cartItem->setExtras($price);
+            }
         } elseif (is_array($id)) {
             $cartItem = CartItem::fromArray($id);
             $cartItem->setQuantity($id['qty']);
         } else {
-            $cartItem = CartItem::fromAttributes($id, $name, $price, $options);
+            $cartItem = CartItem::fromAttributes($id, $name, $price, $options, $extras);
             $cartItem->setQuantity($qty);
         }
 
@@ -579,53 +583,6 @@ class Cart
         $connection = config('cart.database.connection');
 
         return is_null($connection) ? config('database.default') : $connection;
-    }
-
-    /**
-     * Create a new CartItem from the supplied attributes.
-     *
-     * @param mixed     $id
-     * @param mixed     $name
-     * @param int|float $qty
-     * @param float     $price
-     * @param array     $options
-     * @param array     $extras
-     * @return \Gloudemans\Shoppingcart\CartItem
-     */
-    private function createCartItem($id, $name, $qty, $price, array $options, array $extras)
-    {
-        if ($id instanceof Buyable) {
-            $cartItem = CartItem::fromBuyable($id, $qty ?: []);
-            $cartItem->setQuantity($name ?: 1);
-            $cartItem->associate($id);
-
-            if ($price) {
-                $cartItem->setExtras($price);
-            }
-        } elseif (is_array($id)) {
-            $cartItem = CartItem::fromArray($id);
-            $cartItem->setQuantity($id['qty']);
-        } else {
-            $cartItem = CartItem::fromAttributes($id, $name, $price, $options, $extras);
-            $cartItem->setQuantity($qty);
-        }
-
-        $cartItem->setTaxRate(config('cart.tax'));
-
-        return $cartItem;
-    }
-
-    /**
-     * Check if the item is a multidimensional array or an array of Buyables.
-     *
-     * @param mixed $item
-     * @return bool
-     */
-    private function isMulti($item)
-    {
-        if (!is_array($item)) return false;
-
-        return is_array(head($item)) || head($item) instanceof Buyable;
     }
 
     /**

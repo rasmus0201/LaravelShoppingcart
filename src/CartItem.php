@@ -445,6 +445,7 @@ class CartItem implements Arrayable, Jsonable
     public static function fromArray(array $attributes)
     {
         $options = Arr::get($attributes, 'options', []);
+        $extras = Arr::get($attributes, 'extras', []);
 
         return new self($attributes['id'], $attributes['name'], $attributes['price'], $options, $extras);
     }
