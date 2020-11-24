@@ -1,6 +1,8 @@
 <?php
- namespace Gloudemans\Shoppingcart;
- class CartItemDiscount
+
+namespace Gloudemans\Shoppingcart;
+
+class CartItemDiscount
 {
     /**
      * @var int|float
@@ -153,15 +155,18 @@
      */
     private function numberFormat($value, $decimals, $decimalPoint, $thousandSeparator)
     {
-        if(is_null($decimals)){
+        if (is_null($decimals)) {
             $decimals = is_null(config('cart.format.decimals')) ? 2 : config('cart.format.decimals');
         }
-        if(is_null($decimalPoint)){
+
+        if (is_null($decimalPoint)) {
             $decimalPoint = is_null(config('cart.format.decimal_point')) ? '.' : config('cart.format.decimal_point');
         }
-        if(is_null($thousandSeparator)){
+
+        if (is_null($thousandSeparator)) {
             $thousandSeparator = is_null(config('cart.format.thousand_separator')) ? ',' : config('cart.format.thousand_separator');
         }
-         return number_format($value, $decimals, $decimalPoint, $thousandSeparator);
+
+        return number_format($value, $decimals, $decimalPoint, $thousandSeparator);
     }
 }

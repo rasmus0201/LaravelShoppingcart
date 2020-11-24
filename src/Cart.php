@@ -3,14 +3,13 @@
 namespace Gloudemans\Shoppingcart;
 
 use Closure;
-use Illuminate\Support\Collection;
-use Illuminate\Session\SessionManager;
-use Illuminate\Database\DatabaseManager;
-use Illuminate\Contracts\Events\Dispatcher;
 use Gloudemans\Shoppingcart\Contracts\Buyable;
-use Gloudemans\Shoppingcart\Exceptions\UnknownModelException;
 use Gloudemans\Shoppingcart\Exceptions\InvalidRowIDException;
-use Gloudemans\Shoppingcart\Exceptions\CartAlreadyStoredException;
+use Gloudemans\Shoppingcart\Exceptions\UnknownModelException;
+use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Database\DatabaseManager;
+use Illuminate\Session\SessionManager;
+use Illuminate\Support\Collection;
 
 class Cart
 {
@@ -85,9 +84,10 @@ class Cart
      * @param float     $price
      * @param array     $options
      * @param array     $extras
+     * @param float     $taxrate
      * @return \Gloudemans\Shoppingcart\CartItem
      */
-    public function add($id, $name = null, $qty = null, $price = null, array $options = [], array $extras = [])
+    public function add($id, $name = null, $qty = null, $price = null, array $options = [], array $extras = [], $taxrate = null)
     {
         if ($this->isMulti($id)) {
             return array_map(function ($item) {
@@ -95,7 +95,11 @@ class Cart
             }, $id);
         }
 
-        $cartItem = $this->createCartItem($id, $name, $qty, $price, $options, $extras);
+        if ($id instanceof CartItem) {
+            $cartItem = $id;
+        } else {
+            $cartItem = $this->createCartItem($id, $name, $qty, $price, $options, $extras, $taxrate);
+        }
 
         $content = $this->getContent();
 
@@ -186,7 +190,7 @@ class Cart
     {
         $content = $this->getContent();
 
-        if ( ! $content->has($rowId))
+        if (!$content->has($rowId))
             throw new InvalidRowIDException("The cart does not contain rowId {$rowId}.");
 
         return $content->get($rowId);
@@ -302,7 +306,7 @@ class Cart
      */
     public function associate($rowId, $model)
     {
-        if(is_string($model) && ! class_exists($model)) {
+        if (is_string($model) && !class_exists($model)) {
             throw new UnknownModelException("The supplied model {$model} does not exist.");
         }
 
@@ -371,15 +375,17 @@ class Cart
 
 
         $this->getConnection()
-             ->table($this->getTableName())
-             ->where('identifier', $identifier)
-             ->delete();
+            ->table($this->getTableName())
+            ->where('identifier', $identifier)
+            ->where('instance', $this->currentInstance())
+            ->delete();
 
 
         $this->getConnection()->table($this->getTableName())->insert([
             'identifier' => $identifier,
             'instance' => $this->currentInstance(),
-            'content' => serialize($content)
+            'content' => serialize($content),
+            'created_at' => new \DateTime()
         ]);
 
         $this->events->dispatch('cart.stored');
@@ -393,11 +399,12 @@ class Cart
      */
     public function restore($identifier)
     {
-        if( ! $this->storedCartWithIdentifierExists($identifier)) {
+        if (!$this->storedCartWithIdentifierExists($identifier)) {
             return;
         }
 
         $stored = $this->getConnection()->table($this->getTableName())
+            ->where('instance', $this->currentInstance())
             ->where('identifier', $identifier)->first();
 
         $storedContent = unserialize($stored->content);
@@ -417,7 +424,6 @@ class Cart
         $this->session->put($this->instance, $content);
 
         $this->instance($currentInstance);
-
     }
 
     /**
@@ -430,25 +436,25 @@ class Cart
     {
         $content = $this->getContent();
 
-        if($attribute === 'total') {
+        if ($attribute === 'total') {
             return $content->reduce(function ($total, CartItem $cartItem) {
                 return $total + ($cartItem->qty * $cartItem->priceTax);
             }, 0);
         }
 
-        if($attribute === 'tax') {
+        if ($attribute === 'tax') {
             return $content->reduce(function ($tax, CartItem $cartItem) {
                 return $tax + ($cartItem->qty * $cartItem->tax);
             }, 0);
         }
 
-        if($attribute === 'subtotal') {
+        if ($attribute === 'subtotal') {
             return $content->reduce(function ($subTotal, CartItem $cartItem) {
                 return $subTotal + ($cartItem->qty * $cartItem->price);
             }, 0);
         }
 
-        if($attribute === 'discount') {
+        if ($attribute === 'discount') {
             return $content->reduce(function ($discount, CartItem $cartItem) {
                 return $discount + ($cartItem->qty * $cartItem->discount);
             }, 0);
@@ -465,9 +471,9 @@ class Cart
     protected function deleteStoredCart($identifier)
     {
         $this->getConnection()
-             ->table($this->getTableName())
-             ->where('identifier', $identifier)
-             ->delete();
+            ->table($this->getTableName())
+            ->where('identifier', $identifier)
+            ->delete();
     }
 
     /**
@@ -485,12 +491,64 @@ class Cart
     }
 
     /**
+     * Create a new CartItem from the supplied attributes.
+     *
+     * @param mixed     $id
+     * @param mixed     $name
+     * @param int|float $qty
+     * @param float     $price
+     * @param array     $options
+     * @param array     $extras
+     * @param float     $taxrate
+     * @return \Gloudemans\Shoppingcart\CartItem
+     */
+    private function createCartItem($id, $name, $qty, $price, array $options, array $extras, $taxrate)
+    {
+        if ($id instanceof Buyable) {
+            $cartItem = CartItem::fromBuyable($id, $qty ?: []);
+            $cartItem->setQuantity($name ?: 1);
+            $cartItem->associate($id);
+
+            if ($price) {
+                $cartItem->setExtras($price);
+            }
+        } elseif (is_array($id)) {
+            $cartItem = CartItem::fromArray($id);
+            $cartItem->setQuantity($id['qty']);
+        } else {
+            $cartItem = CartItem::fromAttributes($id, $name, $price, $options, $extras);
+            $cartItem->setQuantity($qty);
+        }
+
+        if (isset($taxrate) && is_numeric($taxrate)) {
+            $cartItem->setTaxRate($taxrate);
+        } else {
+            $cartItem->setTaxRate(config('cart.tax'));
+        }
+
+        return $cartItem;
+    }
+
+    /**
+     * Check if the item is a multidimensional array or an array of Buyables.
+     *
+     * @param mixed $item
+     * @return bool
+     */
+    private function isMulti($item)
+    {
+        if (!is_array($item)) return false;
+
+        return is_array(head($item)) || head($item) instanceof Buyable;
+    }
+
+    /**
      * @param $identifier
      * @return bool
      */
     protected function storedCartWithIdentifierExists($identifier)
     {
-        return $this->getConnection()->table($this->getTableName())->where('identifier', $identifier)->exists();
+        return $this->getConnection()->table($this->getTableName())->where('identifier', $identifier)->where('instance', $this->currentInstance())->exists();
     }
 
     /**
@@ -528,53 +586,6 @@ class Cart
     }
 
     /**
-     * Create a new CartItem from the supplied attributes.
-     *
-     * @param mixed     $id
-     * @param mixed     $name
-     * @param int|float $qty
-     * @param float     $price
-     * @param array     $options
-     * @param array     $extras
-     * @return \Gloudemans\Shoppingcart\CartItem
-     */
-    private function createCartItem($id, $name, $qty, $price, array $options, array $extras)
-    {
-        if ($id instanceof Buyable) {
-            $cartItem = CartItem::fromBuyable($id, $qty ?: []);
-            $cartItem->setQuantity($name ?: 1);
-            $cartItem->associate($id);
-
-            if ($price) {
-                $cartItem->setExtras($price);
-            }
-        } elseif (is_array($id)) {
-            $cartItem = CartItem::fromArray($id);
-            $cartItem->setQuantity($id['qty']);
-        } else {
-            $cartItem = CartItem::fromAttributes($id, $name, $price, $options, $extras);
-            $cartItem->setQuantity($qty);
-        }
-
-        $cartItem->setTaxRate(config('cart.tax'));
-
-        return $cartItem;
-    }
-
-    /**
-     * Check if the item is a multidimensional array or an array of Buyables.
-     *
-     * @param mixed $item
-     * @return bool
-     */
-    private function isMulti($item)
-    {
-        if ( ! is_array($item)) return false;
-
-        return is_array(head($item)) || head($item) instanceof Buyable;
-    }
-
-    /**
      * Get the formatted number
      *
      * @param $value
@@ -585,13 +596,13 @@ class Cart
      */
     private function numberFormat($value, $decimals, $decimalPoint, $thousandSeparator)
     {
-        if(is_null($decimals)){
+        if (is_null($decimals)) {
             $decimals = is_null(config('cart.format.decimals')) ? 2 : config('cart.format.decimals');
         }
-        if(is_null($decimalPoint)){
+        if (is_null($decimalPoint)) {
             $decimalPoint = is_null(config('cart.format.decimal_point')) ? '.' : config('cart.format.decimal_point');
         }
-        if(is_null($thousandSeparator)){
+        if (is_null($thousandSeparator)) {
             $thousandSeparator = is_null(config('cart.format.thousand_separator')) ? ',' : config('cart.format.thousand_separator');
         }
 

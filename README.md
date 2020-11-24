@@ -1,9 +1,9 @@
 ## LaravelShoppingcart
-[![Build Status](https://travis-ci.org/Crinsane/LaravelShoppingcart.png?branch=master)](https://travis-ci.org/Crinsane/LaravelShoppingcart)
-[![Total Downloads](https://poser.pugx.org/gloudemans/shoppingcart/downloads.png)](https://packagist.org/packages/gloudemans/shoppingcart)
-[![Latest Stable Version](https://poser.pugx.org/gloudemans/shoppingcart/v/stable)](https://packagist.org/packages/gloudemans/shoppingcart)
-[![Latest Unstable Version](https://poser.pugx.org/gloudemans/shoppingcart/v/unstable)](https://packagist.org/packages/gloudemans/shoppingcart)
-[![License](https://poser.pugx.org/gloudemans/shoppingcart/license)](https://packagist.org/packages/gloudemans/shoppingcart)
+[![Build Status](https://travis-ci.org/hardevine/LaravelShoppingcart.png?branch=master)](https://travis-ci.org/hardevine/LaravelShoppingcart)
+[![Total Downloads](https://poser.pugx.org/hardevine/shoppingcart/downloads.png)](https://packagist.org/packages/hardevine/shoppingcart)
+[![Latest Stable Version](https://poser.pugx.org/hardevine/shoppingcart/v/stable)](https://packagist.org/packages/hardevine/shoppingcart)
+[![Latest Unstable Version](https://poser.pugx.org/hardevine/shoppingcart/v/unstable)](https://packagist.org/packages/hardevine/shoppingcart)
+[![License](https://poser.pugx.org/hardevine/shoppingcart/license)](https://packagist.org/packages/hardevine/shoppingcart)
 
 A simple shoppingcart implementation for Laravel.
 
@@ -65,6 +65,11 @@ In the sixth optional parameter you can pass it extra information. As shipping i
 
 ```php
 Cart::add('293ad', 'Product 1', 1, 9.99, ['size' => 'large'], ['gift' => true]);
+```
+
+You can optional pass different taxrates to the items.
+```php
+Cart::add('293ad', 'Product 1', 1, 9.99, ['size' => 'large'], [], 20);
 ```
 
 **The `add()` method will return an CartItem instance of the item you just added to the cart.**

@@ -2,9 +2,10 @@
 
 namespace Gloudemans\Shoppingcart;
 
-use Illuminate\Contracts\Support\Arrayable;
 use Gloudemans\Shoppingcart\Contracts\Buyable;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Support\Arr;
 
 class CartItem implements Arrayable, Jsonable
 {
@@ -307,13 +308,13 @@ class CartItem implements Arrayable, Jsonable
      */
     public function updateFromArray(array $attributes)
     {
-        $this->id       = array_get($attributes, 'id', $this->id);
-        $this->qty      = array_get($attributes, 'qty', $this->qty);
-        $this->name     = array_get($attributes, 'name', $this->name);
-        $this->price    = array_get($attributes, 'price', $this->price);
-        $this->priceTax = $this->taxedPrice();
-        $this->options  = new CartItemOptions(array_get($attributes, 'options', $this->options));
-        $this->extras   = new CartItemExtras(array_get($attributes, 'extras', $this->extras));
+        $this->id       = Arr::get($attributes, 'id', $this->id);
+        $this->qty      = Arr::get($attributes, 'qty', $this->qty);
+        $this->name     = Arr::get($attributes, 'name', $this->name);
+        $this->price    = Arr::get($attributes, 'price', $this->price);
+        $this->priceTax = $this->price + $this->tax;
+        $this->options  = new CartItemOptions(Arr::get($attributes, 'options', $this->options));
+        $this->extras   = new CartItemExtras(Arr::get($attributes, 'extras', $this->extras));
 
         $this->rowId = $this->generateRowId(
             $this->id,
@@ -369,7 +370,7 @@ class CartItem implements Arrayable, Jsonable
      */
     public function __get($attribute)
     {
-        if(property_exists($this, $attribute)) {
+        if (property_exists($this, $attribute)) {
             return $this->{$attribute};
         }
 
@@ -443,8 +444,8 @@ class CartItem implements Arrayable, Jsonable
      */
     public static function fromArray(array $attributes)
     {
-        $options = array_get($attributes, 'options', []);
-        $extras = array_get($attributes, 'extras', []);
+        $options = Arr::get($attributes, 'options', []);
+        $extras = Arr::get($attributes, 'extras', []);
 
         return new self($attributes['id'], $attributes['name'], $attributes['price'], $options, $extras);
     }
@@ -513,6 +514,11 @@ class CartItem implements Arrayable, Jsonable
      */
     public function toJson($options = 0)
     {
+        if (isset($this->associatedModel)){
+
+           return json_encode(array_merge($this->toArray(), ['model' => $this->model]), $options);
+        }
+
         return json_encode($this->toArray(), $options);
     }
 
@@ -558,7 +564,7 @@ class CartItem implements Arrayable, Jsonable
         }
 
         if (is_null($thousandSeparator)){
-            $thousandSeparator = is_null(config('cart.format.thousand_seperator')) ? ',' : config('cart.format.thousand_seperator');
+            $thousandSeparator = is_null(config('cart.format.thousand_separator')) ? ',' : config('cart.format.thousand_separator');
         }
 
         return number_format($value, $decimals, $decimalPoint, $thousandSeparator);
