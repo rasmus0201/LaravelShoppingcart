@@ -314,6 +314,7 @@ class CartItem implements Arrayable, Jsonable
         $this->price    = Arr::get($attributes, 'price', $this->price);
         $this->priceTax = $this->price + $this->tax;
         $this->options  = new CartItemOptions(Arr::get($attributes, 'options', $this->options));
+        $this->extras   = new CartItemExtras(Arr::get($attributes, 'extras', $this->extras));
 
         $this->rowId = $this->generateRowId(
             $this->id,
@@ -369,7 +370,7 @@ class CartItem implements Arrayable, Jsonable
      */
     public function __get($attribute)
     {
-        if(property_exists($this, $attribute)) {
+        if (property_exists($this, $attribute)) {
             return $this->{$attribute};
         }
 
